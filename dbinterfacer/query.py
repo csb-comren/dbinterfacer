@@ -4,14 +4,12 @@ def query(dsn_string, sql_string):
     conn = psyco.connect(dsn=dsn_string)
     cur = conn.cursor()
     cur.execute(sql_string)
-    if cur.rowcount > 0:
-        results = cur.fetchall()
-    else:
-        results = []
+    result_rows = cur.fetchall()
+
     conn.commit();
     cur.close();
     conn.close();
-    return results
+    return result_rows
 
 def get_all_points(dsn_string):
     get_all_string = """
@@ -23,4 +21,8 @@ def get_all_points(dsn_string):
         FROM (select p.id, p.geom, pd.depth from points p, point_data pd where p.id = pd.pid) as inputs;
     """
 
-    return query(dsn_string, get_all_string)
+    rows = query(dsn_string, get_all_string)
+    results = []
+    for r in rows:
+        results.append(r[0])
+    return results
