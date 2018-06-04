@@ -16,6 +16,7 @@ def get_all_points(dsn_string):
     SELECT jsonb_build_object(
         'type', 'Feature',
         'id', id,
+        'depth', depth,
         'geometry', ST_AsGeoJSON(geom)::jsonb
         ) as feature
         FROM (select p.id, p.geom, pd.depth from points p, point_data pd where p.id = pd.pid) as inputs;
