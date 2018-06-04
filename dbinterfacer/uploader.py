@@ -1,5 +1,5 @@
 import psycopg2 as psyco        # pg driver
-
+import psycopg2.extras
 class Uploader():
     """
     A generic class that has points and can upload them to the database
@@ -17,10 +17,10 @@ class Uploader():
         self.collector_data_fields = collector_data_fields
 
 
-    def upload(self, dsn_string, user_id):
+    def upload(self, dsn_string, user_id, file_ids):
         """
         Makes a new batch and uploads all of the points
-        :input: the dsn string, the user id
+        :input: the dsn string, the user id, a
         """
 
         conn = psyco.connect(dsn=dsn_string)
@@ -28,9 +28,10 @@ class Uploader():
 
         batch_id = self.insert_batch(cur, user_id)
 
+        self.link_files_to_batch(cur, batch_id, file_ids)
+
         insert_points_string = self.generate_insert_string(batch_id)
-        # TODO: psycopg2 has methods of optimizing running the same query a lot of times
-        cur.executemany(insert_points_string, self.points);
+        psycopg2.extras.execute_batch(cur, insert_points_string, self.points)
         conn.commit();
         cur.close();
         conn.close();
@@ -135,3 +136,11 @@ class Uploader():
             if point[field] is not None:
                 point['has_collector_data'] = True
                 break
+
+    def link_files_to_batch(self, cur, batch_id, file_ids):
+        """
+        adds (batch_id, file_id) to batch_files for every file_id in file_ids
+        """
+        insert_tuples = map(lambda x: (batch_id, x), file_ids)
+        insert_string = "INSERT INTO Batch_Files (batch_id, file_id) VALUES %s"
+        psycopg2.extras.execute_values(cur, insert_string, insert_tuples)
