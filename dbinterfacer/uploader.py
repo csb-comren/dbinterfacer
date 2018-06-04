@@ -15,18 +15,19 @@ class Uploader():
         self.point_model = point_model
         self.point_data_fields = point_data_fields
         self.collector_data_fields = collector_data_fields
+        self.start_time = None
 
 
-    def upload(self, dsn_string, user_id, file_ids):
+    def upload(self, dsn_string, file_ids):
         """
         Makes a new batch and uploads all of the points
-        :input: the dsn string, the user id, a
+        :input: the dsn string, a list of file_ids used in the batch
         """
 
         conn = psyco.connect(dsn=dsn_string)
         cur = conn.cursor()
 
-        batch_id = self.insert_batch(cur, user_id)
+        batch_id = self.insert_batch(cur)
 
         self.link_files_to_batch(cur, batch_id, file_ids)
 
@@ -37,17 +38,16 @@ class Uploader():
         conn.close();
 
 
-    def insert_batch(self, cur, user_id, start_time=None):
+    def insert_batch(self, cur):
         """
         Inserts a new batch into the database, returns batch_id
-        :input: cursor, user_id, optional datetime representing the time
-        the batch started
+        :input: cursor
         """
 
         insert_batch_string = """
-            INSERT INTO Batches (user_id, start_time) values (%s, %s) RETURNING id;
+            INSERT INTO Batches (start_time) values (%s) RETURNING id;
         """
-        cur.execute(insert_batch_string, [user_id, start_time])
+        cur.execute(insert_batch_string, [self.start_time])
         batch_id = cur.fetchone()[0]
         return batch_id
 

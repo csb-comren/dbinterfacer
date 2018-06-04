@@ -1,7 +1,7 @@
 from ..uploader import Uploader
 from ..helpers.pointmodel import Point_Model
 
-from  ..import pynmea2 
+from  ..import pynmea2
 from datetime import datetime
 from decimal import Decimal
 
@@ -19,7 +19,6 @@ class NMEA_Uploader(Uploader):
         input = file.__iter__()
         streamreader = pynmea2.NMEAStreamReader()
 
-        start_time = None
         depth_queue = []
         self.prev_gps, self.next_gps = (None, None)
 
@@ -46,8 +45,8 @@ class NMEA_Uploader(Uploader):
                 for msg in streamreader.next(data):
                     if isinstance(msg, pynmea2.RMC):
                         # set the time from the first one
-                        if start_time == None:
-                            start_time = datetime.combine(msg.datestamp, msg.timestamp)
+                        if self.start_time == None:
+                            self.start_time = datetime.combine(msg.datestamp, msg.timestamp)
 
                         self.update_gps(msg)
                         new_point = self.rmc_to_point(msg)
