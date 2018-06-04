@@ -1,7 +1,7 @@
-from dbinterfacer.uploader import Uploader
-from dbinterfacer.helpers.pointmodel import Point_Model
+from ..uploader import Uploader
+from ..helpers.pointmodel import Point_Model
 
-import dbinterfacer.pynmea2 as pynmea2
+from  ..import pynmea2 
 from datetime import datetime
 from decimal import Decimal
 
