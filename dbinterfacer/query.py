@@ -23,7 +23,5 @@ def get_all_points(dsn_string):
     """
 
     rows = query(dsn_string, get_all_string)
-    results = []
-    for r in rows:
-        results.append(r[0])
+    results = map(lambda r: r[0], rows)
     return results

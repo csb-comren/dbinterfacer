@@ -71,36 +71,25 @@ class Uploader():
               point_pk = currval('points_id_seq');
               """.format(batch=batch_id)
 
-        if len(self.point_data_fields) > 0:
+        if self.point_data_fields:
             insert_points += """
               if has_point_data = true then
                 insert into point_data (pid, """
 
-            for field in self.point_data_fields:
-                insert_points += field + ", "
-
-            insert_points = insert_points[:-2]
+            insert_points += ", ".join(self.point_data_fields)
             insert_points += ") values (point_pk, "
-            for field in self.point_data_fields:
-                insert_points += "%("+ field + ")s, "
-
-            insert_points = insert_points[:-2]
+            insert_points += ", ".join(map(lambda f: "%({})s".format(f), self.point_data_fields))
             insert_points += """);
               end if;
               """
 
-        if len(self.collector_data_fields) > 0:
+        if self.collector_data_fields:
             insert_points += """
               if has_collector_data = true then
                 insert into collector_data (pid, """
-
-            for field in self.collector_data_fields:
-                insert_points += field + ", "
-            insert_points = insert_points[:-2]
+            insert_points += ", ".join(self.collector_data_fields)
             insert_points += ") values (point_pk, "
-            for field in self.collector_data_fields:
-                insert_points += "%("+ field + ")s, "
-            insert_points = insert_points[:-2]
+            insert_points += ", ".join(map(lambda f: "%({})s".format(f), self.collector_data_fields))
             insert_points += """);
               end if;"""
 
@@ -122,20 +111,12 @@ class Uploader():
 
     def determine_tables(self, point):
         """
-        Adds 2 boolean fields to the point signfying which tables
+        Adds 2 boolean fields to the point signifying which tables
         the point will end up in
         """
-        point['has_point_data'] = False
-        for field in self.point_data_fields:
-            if point[field] is not None:
-                point['has_point_data'] = True
-                break
+        point['has_point_data'] = any(map(lambda f: point[f] is not None, self.point_data_fields))
+        point['has_collector_data'] = any(map(lambda f: point[f] is not None, self.collector_data_fields))
 
-        point['has_collector_data'] = False
-        for field in self.collector_data_fields:
-            if point[field] is not None:
-                point['has_collector_data'] = True
-                break
 
     def link_files_to_batch(self, cur, batch_id, file_ids):
         """
