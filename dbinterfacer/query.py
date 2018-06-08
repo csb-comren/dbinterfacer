@@ -18,30 +18,34 @@ def query(dsn_string, sql_string):
     return result_rows
 
 
-def get_depth_points_json(dsn_string, where=[]):
+def get_json(json_outs, select):
     """
-    returns an array of geojson depth points filtered by where clause
-    :input: dsn_string, optional array of where strings
-    :ouput: a map of an array of the geojson points
+    Makes a json making sql string
+    :input:
+        json_outs: array of tuples format ("'field_name'", "sql_col_name"),
+            'geom' automaticall changes to "ST_AsGeoJSON(geom)::jsonb"
+        select: a sql select string
+    :ouput: another sql string, one that makes json
     """
-    select = get_select_string(['points', 'point_data'], where, ['points.id','points.geom', 'point_data.depth'])
+    
+    geoms = list(filter(lambda x: x[1] == 'geom', json_outs))
+    outs = list(filter(lambda x: x[1] != 'geom', json_outs))
 
-    get_all_string = """
+    for geom in geoms:
+        outs.append((geom[0], "ST_AsGeoJSON(geom)::jsonb"))
+
+    outs_s = ','.join(map("{0[0]}, {0[1]}".format, outs))
+
+    json_string = """
     SELECT jsonb_build_object(
-        'type', 'Feature',
-        'id', id,
-        'depth', depth,
-        'geometry', ST_AsGeoJSON(geom)::jsonb
+        {}
         ) as feature
         FROM ({}) as inputs;
-    """.format(select)
-
-    rows = query(dsn_string, get_all_string)
-    results = map(lambda r: r[0], rows)
-    return results
+    """.format(outs_s, select)
+    return json_string
 
 
-def get_select_string(tables, wheres, outputs):
+def get_select_string(outputs, tables, wheres):
     """
     Makes a full sql select statement (without a final ';')
     :inputs: 3 arrays
