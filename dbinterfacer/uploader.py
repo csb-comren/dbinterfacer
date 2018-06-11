@@ -38,6 +38,13 @@ class Uploader():
         conn.close();
 
 
+    def parse_file(self, file):
+        """
+        Abstract methods. Takes a file and makes corresponding points.
+        """
+        raise NotImplementedError("Please Implement this method")
+
+
     def insert_batch(self, cur):
         """
         Inserts a new batch into the database, returns batch_id
