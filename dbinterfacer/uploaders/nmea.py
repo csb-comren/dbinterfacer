@@ -8,12 +8,8 @@ from decimal import Decimal
 
 class NMEA_Uploader(Uploader):
     """
-    Class for upload NMEA files. Uploads only: time, lat, lon, depth, speed, course
+    Class for upload NMEA files. Uploads only: time, lat, lon, depth
     """
-    def __init__(self):
-        pm = Point_Model([('depth', Decimal), ('speed', float), ('course', float)])
-        Uploader.__init__(self, pm, ['depth'], ['speed', 'course'])
-
 
     def parse_file(self, file):
         input = file.__iter__()
@@ -49,10 +45,7 @@ class NMEA_Uploader(Uploader):
                             self.start_time = datetime.combine(msg.datestamp, msg.timestamp)
 
                         self.update_gps(msg)
-                        new_point = self.rmc_to_point(msg)
-                        self.add_point(new_point)
-
-                        # try processing RMC msgs
+                        # try processing depth msgs
                         if len(depth_queue) > 0:
                             ready_depth_points = self.make_depth_points(depth_queue)
                             for p in ready_depth_points:
@@ -68,8 +61,8 @@ class NMEA_Uploader(Uploader):
         point['time'] = m.time
         point['latitude'] = m.lat_r
         point['longitude'] = m.lon_r
-        point['speed'] = m.spd_over_grnd
-        point['course'] = m.true_course
+        point['pr_speed'] = m.spd_over_grnd
+        point['pr_course'] = m.true_course
 
         return point
 
