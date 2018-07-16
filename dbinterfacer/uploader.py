@@ -1,3 +1,4 @@
+from io import StringIO
 import psycopg2 as psyco        # pg driver
 import psycopg2.extras
 from .helpers.exceptions import NoBatchTypeException
@@ -36,21 +37,24 @@ class Uploader():
         cur = conn.cursor()
 
         batch_id = self.insert_batch(cur)
-
         self.link_files_to_batch(cur, batch_id, file_ids)
 
         fields = list(self.point_model.model)
-        insert_string = "INSERT INTO {table} ({fields}, batch_id)".format(table=self.ref_table, fields=', '.join(fields))
-
-        # makes a string of format '%(field1)s, %(field2)s, ...'
-        parametrized = ', '.join(map(lambda f: "%("+f+")s", fields))
-
-        insert_string += "VALUES ({parametrized}, {batch_id});".format(parametrized=parametrized, batch_id=batch_id)
 
         # remove all the fields that start with 'pr_' from points
         trimmed_points = map(lambda p: {f:p[f] for f in p if not f.startswith('pr_')}, self.points)
 
-        psycopg2.extras.execute_batch(cur, insert_string, trimmed_points)
+        # make a tab-delimited CSV for the copy statement
+        # TODO: string escaping stuff
+        copy_file = StringIO()
+        for p in trimmed_points:
+            s = '\t'.join([str(p[f]) for f in fields] + [str(batch_id)])
+            print(s, file=copy_file)
+
+        copy_file.seek(0)
+        header = fields + ['batch_id']
+        cur.copy_from(copy_file, self.ref_table, columns=header)
+
         conn.commit();
         cur.close();
         conn.close();
