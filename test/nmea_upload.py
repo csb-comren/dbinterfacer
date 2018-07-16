@@ -16,4 +16,4 @@ f = open('test/data/NMEA.txt', 'rb')
 
 u = NMEA_Uploader(local_url, 'simple depth')
 u.parse_file(f)
-u.upload([1])
+u.upload([])
