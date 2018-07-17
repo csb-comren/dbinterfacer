@@ -10,4 +10,4 @@ u.parse_file(f)
 
 print(len(u.points))
 
-u.upload([1])
+u.upload([])
