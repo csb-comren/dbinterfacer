@@ -40,10 +40,6 @@ class NMEA_Uploader(Uploader):
             if data.startswith(accepted_sentences):
                 for msg in streamreader.next(data):
                     if isinstance(msg, pynmea2.RMC):
-                        # set the time from the first one
-                        if self.start_time == None:
-                            self.start_time = datetime.combine(msg.datestamp, msg.timestamp)
-
                         self.update_gps(msg)
                         # try processing depth msgs
                         if len(depth_queue) > 0:
@@ -54,6 +50,7 @@ class NMEA_Uploader(Uploader):
                     if isinstance(msg, pynmea2.types.proprietary.adb.ADBT) or isinstance(msg, pynmea2.types.talker.DBT):
                         depth_queue.append((msg, time))
 
+        super(NMEA_Uploader, self).parse_file(file)
 
     def rmc_to_point(self, m):
 

@@ -1,4 +1,5 @@
 from io import StringIO
+from functools import reduce
 import psycopg2 as psyco        # pg driver
 import psycopg2.extras
 from .helpers.exceptions import NoBatchTypeException
@@ -62,9 +63,12 @@ class Uploader():
 
     def parse_file(self, file):
         """
-        Abstract methods. Takes a file and makes corresponding points.
+        Takes a file and makes corresponding points and then gets the ranges of time and lat/lon.
+        The parsing should be done in the subclasses and then super() should be user
         """
-        raise NotImplementedError("This is not implemented in the base class")
+
+        self.set_time_range_and_bbox()
+        # raise NotImplementedError("This is not implemented in the base class")
 
 
     def insert_batch(self, cur):
@@ -73,10 +77,15 @@ class Uploader():
         :input: cursor
         """
 
+        bbox_string = "ST_GeomFromText('POLYGON(({min_lon} {min_lat},{max_lon} {min_lat},{max_lon} {max_lat},{min_lon} {max_lat}, {min_lon} {min_lat}))', 4326)"
+        bbox_string = bbox_string.format(min_lon=self.min_lon,max_lon=self.max_lon,min_lat=self.min_lat,max_lat=self.max_lat)
+
         insert_batch_string = """
-            INSERT INTO Batches (start_time, batch_type_id) values (%s, %s) RETURNING id;
-        """
-        cur.execute(insert_batch_string, [self.start_time, self.batch_type_id])
+            INSERT INTO Batches (start_time, end_time, batch_type_id, bbox)
+            VALUES (%s, %s, %s, {}) RETURNING id;
+        """.format(bbox_string)
+
+        cur.execute(insert_batch_string, [self.start_time, self.end_time, self.batch_type_id])
         batch_id = cur.fetchone()[0]
         return batch_id
 
@@ -119,3 +128,22 @@ class Uploader():
         conn.commit()
         cur.close()
         conn.close()
+
+
+    def set_time_range_and_bbox(self):
+        def update_ranges(current, new):
+            for key in current:
+                val = current[key]
+                if val is None:
+                    current[key] = [new[key], new[key]]
+                else:
+                    current[key] = [min(current[key][0], new[key]), max(current[key][1], new[key])]
+            return current
+
+        ranges = { 'time':None, 'latitude':None, 'longitude':None }
+        extremes = reduce(update_ranges, self.points, ranges)
+
+        self.start_time, self.end_time = extremes['time']
+        self.start_time, self.end_time = extremes['time']
+        self.min_lat, self.max_lat = extremes['latitude']
+        self.min_lon, self.max_lon = extremes['longitude']
