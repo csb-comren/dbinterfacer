@@ -32,6 +32,7 @@ class Uploader():
         """
         Makes a new batch and uploads all of the points
         :input: a list of file_ids used in the batch
+        Returns the new batch_id
         """
 
         conn = psyco.connect(dsn=self.dsn_string)
@@ -59,6 +60,8 @@ class Uploader():
         conn.commit();
         cur.close();
         conn.close();
+
+        return batch_id
 
 
     def parse_file(self, file):
