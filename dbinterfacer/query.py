@@ -1,6 +1,6 @@
 import psycopg2 as psyco
 
-def query(dsn_string, sql_string):
+def query(dsn_string, sql_string, parameters=None):
     """
     Runs the query and returns an array of row-tuples
     :inputs: dsn_string and an sql string
@@ -9,7 +9,7 @@ def query(dsn_string, sql_string):
 
     conn = psyco.connect(dsn=dsn_string)
     cur = conn.cursor()
-    cur.execute(sql_string)
+    cur.execute(sql_string, parameters)
     result_rows = cur.fetchall()
 
     conn.commit();
@@ -27,7 +27,7 @@ def get_json(json_outs, select):
         select: a sql select string
     :ouput: another sql string, one that makes json
     """
-    
+
     geoms = list(filter(lambda x: x[1] == 'geom', json_outs))
     outs = list(filter(lambda x: x[1] != 'geom', json_outs))
 
@@ -58,9 +58,10 @@ def get_select_string(outputs, tables, wheres):
     output_s = ','.join(outputs)
     tables_s = ','.join(tables)
 
+    # TODO: joins have not been updated
     tables.sort()
     all_joins = {
-        'batch:points' : 'batch.id = points.batch_id',
+        'batches:dept' : 'batch.id = points.batch_id',
         'collector_data:points' : 'points.id = collector_data.pid',
         'point_data:points' : 'points.id = point_data.pid',
     }
@@ -74,11 +75,11 @@ def get_select_string(outputs, tables, wheres):
     joins_s = " and ".join(joins)
 
     if wheres:
-        where_s = " and ({})".format(" and ".join(wheres))
-    else:
-        where_s = ""
+        other_wheres_s =  " and ".join(wheres)
 
-    select_s = """ SELECT %s from %s WHERE %s%s""" % (output_s, tables_s, joins_s, where_s,)
+    where_s = " and ".join(filter(lambda x: x != '', [joins_s, other_wheres_s]))
+
+    select_s = """ SELECT %s from %s WHERE %s""" % (output_s, tables_s, where_s,)
 
     return select_s
 
@@ -103,6 +104,6 @@ def where_point_within_range(point, range):
     :input: point - (lon, lat), range - positive number
     :output: a where clause string
     """
-    radius_string = "ST_DWithin(ST_PointFromText('POINT({p[0]} {p[1]})', 4326) ::geography, points.geom, {r})"
+    radius_string = "ST_DWithin(ST_PointFromText('POINT({p[0]} {p[1]})', 4326) ::geography, geom, {r})"
     radius_string = radius_string.format(p=point, r=range)
     return radius_string
