@@ -1,0 +1,26 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "2258b46b17caa4c122ac9eaccfbe86ba90c5efb73f68bad74ad099a91042c2d1"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.6"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "pynmea2": {
+            "editable": true,
+            "git": "ssh://git@github.com/csb-comren/pynmea2.git",
+            "ref": "c5503d33322292df538597d04b7c4d6e8424dc5a"
+        }
+    },
+    "develop": {}
+}

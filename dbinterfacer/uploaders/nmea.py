@@ -1,7 +1,7 @@
 from ..uploader import Uploader
 from ..helpers.pointmodel import Point_Model
 
-from  ..import pynmea2
+import pynmea2
 from datetime import datetime
 from decimal import Decimal
 
