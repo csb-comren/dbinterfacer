@@ -8,7 +8,8 @@ from .helpers.pointmodel import Point_Model
 
 class Uploader():
     """
-    A generic class that has points and can upload them to the database
+    The base class for other uploaders. The subclasses should essentially just implement the
+    specific parser. This class initalizes the point model and interacts with the database.
     """
 
 
@@ -18,21 +19,22 @@ class Uploader():
         :input:
             - dsn_string
             - the name of the batch_type the point_model is to be based off
+                (should match the name of a type in the database)
         """
 
         self.dsn_string = dsn_string
         self.batch_type_name = batch_type_name
         self.points = []
-        self.start_time = None                  # the time when the surveyed started, should be set when the file is parsed
         self.set_ref_table_and_fields()
 
 
 
     def upload(self, file_ids):
         """
-        Makes a new batch and uploads all of the points
-        :input: a list of file_ids used in the batch
+        Makes a new batch and uploads all of the points. Also connects files to batchself.
         Returns the new batch_id
+        :input: a list of file_ids used in the batch
+        :output: int - id of batch
         """
 
         conn = psyco.connect(dsn=self.dsn_string)
@@ -41,20 +43,7 @@ class Uploader():
         batch_id = self.insert_batch(cur)
         self.link_files_to_batch(cur, batch_id, file_ids)
 
-        fields = list(self.point_model.model)
-
-        # remove all the fields that start with 'pr_' from points
-        trimmed_points = map(lambda p: {f:p[f] for f in p if not f.startswith('pr_')}, self.points)
-
-        # make a tab-delimited CSV for the copy statement
-        # TODO: string escaping stuff
-        copy_file = StringIO()
-        for p in trimmed_points:
-            s = '\t'.join([str(p[f]) for f in fields] + [str(batch_id)])
-            print(s, file=copy_file)
-
-        copy_file.seek(0)
-        header = fields + ['batch_id']
+        copy_file, header = self.make_csv(batch_id)
         cur.copy_from(copy_file, self.ref_table, columns=header)
 
         conn.commit();
@@ -67,16 +56,15 @@ class Uploader():
     def parse_file(self, file):
         """
         Takes a file and makes corresponding points and then gets the ranges of time and lat/lon.
-        The parsing should be done in the subclasses and then super() should be user
+        The parsing should be done in the subclasses and then super() should be used
         """
 
         self.set_time_range_and_bbox()
-        # raise NotImplementedError("This is not implemented in the base class")
 
 
     def insert_batch(self, cur):
         """
-        Inserts a new batch into the database, returns batch_id
+        Inserts a new batch into the database, returns batch_id. Can only be run after parsing.
         :input: cursor
         """
 
@@ -96,6 +84,7 @@ class Uploader():
     def add_point(self, point):
         """
         Stores the point, also validates
+        :input: a point dict
         """
         if self.point_model.validate(point):
             self.points.append(point)
@@ -104,6 +93,7 @@ class Uploader():
     def link_files_to_batch(self, cur, batch_id, file_ids):
         """
         adds (batch_id, file_id) to batch_files for every file_id in file_ids
+        :input: cursor, batch_id, iterable of file ids
         """
         insert_tuples = map(lambda x: (batch_id, x), file_ids)
         insert_string = "INSERT INTO Batch_Files (batch_id, file_id) VALUES %s"
@@ -121,7 +111,7 @@ class Uploader():
 
         result = cur.fetchone()
         if result is None:
-            raise NoBatchTypeException("There is no batch type with name %s" % self.batch_type_name)
+            raise NoBatchTypeException("There is no batch type with name '%s'" % self.batch_type_name)
         self.batch_type_id, self.ref_table = result
 
         cur.execute('SELECT field_name, field_type from batch_type_fields f, batch_types b where b.id = %s and b.id = f.batch_type_id', (self.batch_type_id,))
@@ -134,6 +124,10 @@ class Uploader():
 
 
     def set_time_range_and_bbox(self):
+        """
+        Runs through all the points and finds the min and max of time, latitude and longitude
+        Adds those vars to self. min_lon, max_lat, min_time, etc
+        """
         def update_ranges(current, new):
             for key in current:
                 val = current[key]
@@ -150,3 +144,30 @@ class Uploader():
         self.start_time, self.end_time = extremes['time']
         self.min_lat, self.max_lat = extremes['latitude']
         self.min_lon, self.max_lon = extremes['longitude']
+
+
+    def make_csv(self, batch_id):
+        """
+        Makes a file-like object in tab-delimited CSV format without headers.
+        Every point gets turned into a line.
+        Returns a StringIO object and a list of strings representing the header.
+        Any tabs in the values are replaced with spaces.
+        :input: the batch_id
+        :output: StringIO object in csv format, list of strings for header
+        """
+        fields = list(self.point_model.model)
+
+        # remove all the fields that start with 'pr_' from points
+        trimmed_points = map(lambda p: {f:p[f] for f in p if not f.startswith('pr_')}, self.points)
+
+        copy_file = StringIO()
+        for p in trimmed_points:
+            # makes the line replacing any existing \t with spaces
+            s = '\t'.join([str(p[f]).replace('\t', ' ') for f in fields] + [str(batch_id)])
+            print(s, file=copy_file)
+
+        copy_file.seek(0)
+
+        header = fields + ['batch_id']
+
+        return copy_file, header
