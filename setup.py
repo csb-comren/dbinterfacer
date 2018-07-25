@@ -6,4 +6,6 @@ setup(
     url='https://github.com/csb-comren/dbinterfacer',
 
     description='Abstraction layer between the database and django',
+
+    install_requires=['pynmea2'],
 )
