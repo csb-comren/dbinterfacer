@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 "pynmea2" = {editable = true, git = "ssh://git@github.com/csb-comren/pynmea2.git"}
+"psycopg2" = "*"
 
 [dev-packages]
 
