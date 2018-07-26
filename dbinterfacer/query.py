@@ -1,21 +1,24 @@
 import psycopg2 as psyco
 
+
 def query(dsn_string, sql_string, parameters=None):
     """
     Runs the query and returns an array of row-tuples
-    :inputs: dsn_string and an sql string
+    :inputs: dsn_string and an sql string, optional sql parameters
     :outputs: an array of tuples
     """
 
     conn = psyco.connect(dsn=dsn_string)
     cur = conn.cursor()
     cur.execute(sql_string, parameters)
+
     result_rows = cur.fetchall()
+    header = list(map(lambda col: col.name, cur.description))
 
     conn.commit();
     cur.close();
     conn.close();
-    return result_rows
+    return result_rows, header
 
 
 def get_json(json_outs, select):
@@ -74,12 +77,15 @@ def get_select_string(outputs, tables, wheres):
                 joins.append(all_joins[combo])
     joins_s = " and ".join(joins)
 
+    other_wheres_s = ""
     if wheres:
         other_wheres_s =  " and ".join(wheres)
 
     where_s = " and ".join(filter(lambda x: x != '', [joins_s, other_wheres_s]))
+    if where_s != '':
+        where_s = "WHERE " + where_s
 
-    select_s = """ SELECT %s from %s WHERE %s""" % (output_s, tables_s, where_s,)
+    select_s = """ SELECT %s FROM %s %s""" % (output_s, tables_s, where_s,)
 
     return select_s
 
