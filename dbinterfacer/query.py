@@ -95,8 +95,8 @@ def where_point_within_range(point, range):
     return radius_string
 
 
-def get_batch_list(dsn_string, where_list):
-    select = qu.get_select_string(
+def get_batch_list(dsn_string, where_list=[]):
+    select = get_select_string(
         [
             'start_time',
             'end_time',
