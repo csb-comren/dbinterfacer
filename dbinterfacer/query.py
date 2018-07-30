@@ -21,33 +21,6 @@ def query(dsn_string, sql_string, parameters=None):
     return result_rows, header
 
 
-def get_json(json_outs, select):
-    """
-    Makes a json making sql string
-    :input:
-        json_outs: array of tuples format ("'field_name'", "sql_col_name"),
-            'geom' automaticall changes to "ST_AsGeoJSON(geom)::jsonb"
-        select: a sql select string
-    :ouput: another sql string, one that makes json
-    """
-
-    geoms = list(filter(lambda x: x[1] == 'geom', json_outs))
-    outs = list(filter(lambda x: x[1] != 'geom', json_outs))
-
-    for geom in geoms:
-        outs.append((geom[0], "ST_AsGeoJSON(geom)::jsonb"))
-
-    outs_s = ','.join(map("{0[0]}, {0[1]}".format, outs))
-
-    json_string = """
-    SELECT jsonb_build_object(
-        {}
-        ) as feature
-        FROM ({}) as inputs;
-    """.format(outs_s, select)
-    return json_string
-
-
 def get_select_string(outputs, tables, wheres):
     """
     Makes a full sql select statement (without a final ';')
@@ -64,9 +37,16 @@ def get_select_string(outputs, tables, wheres):
     # TODO: joins have not been updated
     tables.sort()
     all_joins = {
-        'batches:dept' : 'batch.id = points.batch_id',
-        'collector_data:points' : 'points.id = collector_data.pid',
-        'point_data:points' : 'points.id = point_data.pid',
+        'batch_files:batches' : 'batch_files.batch_id = batch.id',
+        'batch_files:django.upload_file' : 'batch_files.file_id = django.upload_file.id',
+        'batch_type_1:batches' : 'batch_type_1.batch_id = batch.id',
+        'batch_type_fields:batch_types' : 'batch_type_fields.batch_type_id = batch_types.id',
+        'batch_type_fields:lookup_field_types' : 'batch_type_fields.field_type = lookup_field_types.name',
+        'django.upload_file:django.upload_upload' : 'django.upload_file.upload_id = django.upload_upload.id',
+        'django.upload_upload:django.user_user' : 'django.upload_upload.user_id = django.user_user.id',
+        'django.upload_upload:django.upload_upload_sensors' : 'django.upload_upload.id = django.upload_upload_sensors.upload_id',
+        'django.upload_upload_sensors:django.user_sensor' : 'django.upload_upload_sensors.sensor_id = django.user_sensor.id',
+        'django.upload_upload_sensors:django.user_sensor' : 'django.upload_upload_sensors.sensor_id = django.user_sensor.id',
     }
 
     joins = []
@@ -113,3 +93,25 @@ def where_point_within_range(point, range):
     radius_string = "ST_DWithin(ST_PointFromText('POINT({p[0]} {p[1]})', 4326) ::geography, geom, {r})"
     radius_string = radius_string.format(p=point, r=range)
     return radius_string
+
+
+def get_batch_list(dsn_string, where_list):
+    select = qu.get_select_string(
+        [
+            'start_time',
+            'end_time',
+            'upload_time',
+            'batch_types.name batch_type',
+            'batch_types.description batch_description'
+        ],
+        ['batches', 'batch_types'],
+        where_list)
+    return query(dsn_string, select)
+
+
+def get_batch_bbox(dsn_string, batch_id):
+    select = get_select_string(
+        ['ST_Xmin(bbox)', 'ST_Ymin(bbox)', 'ST_Xmax(bbox)', 'ST_Ymax(bbox)'],
+        ['batches'],
+        ['id = %s'])
+    return query(dsn_string, select, parameters=(batch_id, ))
