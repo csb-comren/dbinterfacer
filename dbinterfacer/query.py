@@ -98,13 +98,11 @@ def where_point_within_range(point, range):
 def get_batch_list(dsn_string, where_list=[]):
     select = get_select_string(
         [
-            'start_time',
-            'end_time',
-            'upload_time',
-            'batch_types.name batch_type',
-            'batch_types.description batch_description'
+            'batches.start_time',
+            'batches.end_time',
+            'batches.id',
         ],
-        ['batches', 'batch_types'],
+        ['batches'],
         where_list)
     return query(dsn_string, select)
 
@@ -113,5 +111,5 @@ def get_batch_bbox(dsn_string, batch_id):
     select = get_select_string(
         ['ST_Xmin(bbox)', 'ST_Ymin(bbox)', 'ST_Xmax(bbox)', 'ST_Ymax(bbox)'],
         ['batches'],
-        ['id = %s'])
+        ['batches.id = %s'])
     return query(dsn_string, select, parameters=(batch_id, ))
