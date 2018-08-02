@@ -37,9 +37,9 @@ def get_select_string(outputs, tables, wheres):
     # TODO: joins have not been updated
     tables.sort()
     all_joins = {
-        'batch_files:batches' : 'batch_files.batch_id = batch.id',
+        'batch_files:batches' : 'batch_files.batch_id = batches.id',
         'batch_files:django.upload_file' : 'batch_files.file_id = django.upload_file.id',
-        'batch_type_1:batches' : 'batch_type_1.batch_id = batch.id',
+        'batch_type_1:batches' : 'batch_type_1.batch_id = batches.id',
         'batch_type_fields:batch_types' : 'batch_type_fields.batch_type_id = batch_types.id',
         'batch_type_fields:lookup_field_types' : 'batch_type_fields.field_type = lookup_field_types.name',
         'django.upload_file:django.upload_upload' : 'django.upload_file.upload_id = django.upload_upload.id',
