@@ -6,12 +6,11 @@ from ..helpers.exceptions import NoBatchTypeException
 from ..helpers.pointmodel import Point_Model
 
 
-class Uploader():
+class Uploader:
     """
     The base class for other uploaders. The subclasses should essentially just implement the
     specific parser. This class initalizes the point model and interacts with the database.
     """
-
 
     def __init__(self, dsn_string, batch_type_name):
         """
@@ -26,8 +25,6 @@ class Uploader():
         self.batch_type_name = batch_type_name
         self.points = []
         self.set_ref_table_and_fields()
-
-
 
     def upload(self, file_ids):
         """
@@ -52,7 +49,6 @@ class Uploader():
 
         return batch_id
 
-
     def parse_file(self, file):
         """
         Takes a file and makes corresponding points and then gets the ranges of time and lat/lon.
@@ -60,7 +56,6 @@ class Uploader():
         """
 
         self.set_time_range_and_bbox()
-
 
     def insert_batch(self, cur):
         """
@@ -89,7 +84,6 @@ class Uploader():
         if self.point_model.validate(point):
             self.points.append(point)
 
-
     def link_files_to_batch(self, cur, batch_id, file_ids):
         """
         adds (batch_id, file_id) to batch_files for every file_id in file_ids
@@ -98,7 +92,6 @@ class Uploader():
         insert_tuples = map(lambda x: (batch_id, x), file_ids)
         insert_string = "INSERT INTO Batch_Files (batch_id, file_id) VALUES %s"
         psycopg2.extras.execute_values(cur, insert_string, insert_tuples)
-
 
     def set_ref_table_and_fields(self):
         """
@@ -122,7 +115,6 @@ class Uploader():
         cur.close()
         conn.close()
 
-
     def set_time_range_and_bbox(self):
         """
         Runs through all the points and finds the min and max of time, latitude and longitude
@@ -144,7 +136,6 @@ class Uploader():
         self.start_time, self.end_time = extremes['time']
         self.min_lat, self.max_lat = extremes['latitude']
         self.min_lon, self.max_lon = extremes['longitude']
-
 
     def make_csv(self, batch_id):
         """
