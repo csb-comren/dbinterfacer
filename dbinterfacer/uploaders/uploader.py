@@ -2,8 +2,8 @@ from io import StringIO
 from functools import reduce
 import psycopg2 as psyco        # pg driver
 import psycopg2.extras
-from .helpers.exceptions import NoBatchTypeException
-from .helpers.pointmodel import Point_Model
+from ..helpers.exceptions import NoBatchTypeException
+from ..helpers.pointmodel import Point_Model
 
 
 class Uploader():

@@ -1,6 +1,4 @@
-#!/Users/jaykaron/csb-comren/ENV/bin/python
-from dbinterfacer.uploader import Uploader
-from dbinterfacer.uploaders.nmea import NMEA_Uploader
+from dbinterfacer.uploaders import NMEA_Uploader
 from dbinterfacer.helpers.pointmodel import Point_Model
 
 from secret import local_url, comren_url

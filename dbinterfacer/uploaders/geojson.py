@@ -1,4 +1,4 @@
-from ..uploader import Uploader
+from ..uploaders import Uploader
 from ..helpers.pointmodel import Point_Model
 
 import ijson

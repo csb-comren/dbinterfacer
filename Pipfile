@@ -4,8 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"pynmea2" = {editable = true, git = "ssh://git@github.com/csb-comren/pynmea2.git"}
+pynmea2 = {editable = true,git = "ssh://git@github.com/csb-comren/pynmea2.git"}
 "psycopg2" = "*"
+ijson = "*"
 
 [dev-packages]
 
