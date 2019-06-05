@@ -5,8 +5,8 @@ name = "pypi"
 
 [packages]
 pynmea2 = {editable = true,git = "ssh://git@github.com/csb-comren/pynmea2.git"}
-"psycopg2" = "*"
 ijson = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
