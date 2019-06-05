@@ -1,12 +1,10 @@
 from ..uploaders import Uploader
-from ..helpers.pointmodel import Point_Model
-
 import pynmea2
 from datetime import datetime
 from decimal import Decimal
 
 
-class NMEA_Uploader(Uploader):
+class NmeaUploader(Uploader):
     """
     Class for upload NMEA files. Uploads only: time, lat, lon, depth
     """
@@ -50,7 +48,7 @@ class NMEA_Uploader(Uploader):
                     if isinstance(msg, pynmea2.types.proprietary.adb.ADBT) or isinstance(msg, pynmea2.types.talker.DBT):
                         depth_queue.append((msg, time))
 
-        super(NMEA_Uploader, self).parse_file(file)
+        super(NmeaUploader, self).parse_file(file)
 
     def rmc_to_point(self, m):
 
@@ -66,8 +64,8 @@ class NMEA_Uploader(Uploader):
 
     def update_gps(self, msg):
         msg.time = datetime.combine(msg.datestamp, msg.timestamp)
-        msg.lat_r = NMEA_Uploader.nmea_l_to_dec(msg.lat, msg.lat_dir)
-        msg.lon_r = NMEA_Uploader.nmea_l_to_dec(msg.lon, msg.lon_dir)
+        msg.lat_r = NmeaUploader.nmea_l_to_dec(msg.lat, msg.lat_dir)
+        msg.lon_r = NmeaUploader.nmea_l_to_dec(msg.lon, msg.lon_dir)
         self.prev_gps = self.next_gps
         self.next_gps = msg
 

@@ -1,4 +1,4 @@
-from dbinterfacer.uploaders import NMEA_Uploader
+from dbinterfacer.uploaders import NmeaUploader
 from dbinterfacer.helpers.pointmodel import Point_Model
 
 from secret import local_url, comren_url
@@ -12,6 +12,6 @@ f = open('test/data/NMEA.txt', 'rb')
 # u.upload(local_url, [1])
 
 
-u = NMEA_Uploader(local_url, 'simple depth')
+u = NmeaUploader(local_url, 'simple depth')
 u.parse_file(f)
 print(u.get_time_range_and_bbox())

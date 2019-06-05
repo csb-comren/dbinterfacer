@@ -1,14 +1,10 @@
 from ..uploaders import Uploader
-from ..helpers.pointmodel import Point_Model
-
 import ijson
-from decimal import Decimal
 from datetime import datetime
 
-class GeoJSON_Uploader(Uploader):
+class GeoJsonUploader(Uploader):
 
     def parse_file(self, file):
-        input = file.__iter__()
         json_points = ijson.items(file, 'features.item')
 
         for jp in json_points:
@@ -20,4 +16,4 @@ class GeoJSON_Uploader(Uploader):
             p['latitude'] = jp['geometry']['coordinates'][1]
             self.add_point(p)
 
-        super(GeoJSON_Uploader, self).parse_file(file)
+        super(GeoJsonUploader, self).parse_file(file)
